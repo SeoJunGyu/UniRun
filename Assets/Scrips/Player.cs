@@ -6,9 +6,12 @@ public class Player : MonoBehaviour
     public int jumpCountMax = 2;
     public GameManager gameManager;
 
+    public AudioClip dieAudioClip;
+
     private int jumpCount;
     private Animator animator;
     private Rigidbody2D rb;
+    private AudioSource audioSource;
 
     private bool isGrounded = true;
     private bool isDead = false;
@@ -18,6 +21,7 @@ public class Player : MonoBehaviour
         animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         gameManager = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void Update()
@@ -37,6 +41,12 @@ public class Player : MonoBehaviour
             rb.linearVelocity = Vector2.zero;
             rb.AddForce(new Vector2(0f, jumpForce), ForceMode2D.Impulse); //Force : FixedUpdat에서 움직일때, Impulse : 한번에 힘 줄때
             jumpCount++;
+
+            audioSource.Play();
+        }
+        if(Input.GetMouseButtonUp(0) && rb.linearVelocityY > 0)
+        {
+            rb.linearVelocityY *= 0.5f;
         }
 
         animator.SetBool("Grounded", isGrounded);
@@ -44,7 +54,8 @@ public class Player : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if(collision.collider.CompareTag("Platform"))
+        //collision.contacts[0].normal : 내가 충돌한 첫번째 충돌체의 윗면
+        if (collision.collider.CompareTag("Platform") && collision.contacts[0].normal.y > 0.7f)
         {
             isGrounded = true;
             jumpCount = 0;
@@ -76,5 +87,12 @@ public class Player : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
 
         gameManager.OnPlayerDead();
+
+        //1. 오디오 소스 바꾸고 플레이
+        //audioSource.clip = dieAudioClip;
+        //audioSource.Play();
+
+        //2. 오디오에 바꾸고 플레이 함수가 있다.
+        audioSource.PlayOneShot(dieAudioClip);
     }
 }
